@@ -13,4 +13,6 @@ portcord <- read_excel("data/portcoords.xlsx")
 portcord$`Schedule K Code` <- as.numeric(portcord$`Schedule K Code`)
  
 #join data
-test <- inner_join(e_2023, portcord, join_by("FORPORT" == "Schedule K Code"))
+test <- inner_join(portcord, e_2023, join_by("Schedule K Code" == "FORPORT"), relationship = "many-to-many")
+
+write.csv(portcord, file="data/ports.csv")
