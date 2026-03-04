@@ -13,6 +13,7 @@ portcord <- read_excel("data/portcoords.xlsx")
 portcord$`Schedule K Code` <- as.numeric(portcord$`Schedule K Code`)
  
 #join data
-test <- inner_join(portcord, e_2023, join_by("Schedule K Code" == "FORPORT"), relationship = "many-to-many")
+portcord <- portcord %>% filter(`Foreign Port Name` %in% unique(e_2023$FORPORT_NAME)) %>% drop_na(Latitude)
+test <- full_join(portcord, e_2023, join_by("Schedule K Code" == "FORPORT"), relationship = "many-to-many")
 
 write.csv(portcord, file="data/ports.csv")

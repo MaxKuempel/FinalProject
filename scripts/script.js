@@ -1,6 +1,7 @@
-let test;
-let csv;
-function FetchTest(){
+       let test;
+        let csv;
+
+                function FetchTest(){
     fetch("data/ports.csv")
     .then(response => response.text())
     .then(data => {
@@ -9,8 +10,9 @@ function FetchTest(){
         test = csv2geojson.auto(data);
         console.log("conversion complete :)");
          DisplayPorts();
-    })
-}
+         })
+        }
+FetchTest()
 
 //basemap
 var map = L.map('map')
@@ -22,19 +24,13 @@ var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{
 });
 OpenStreetMap_HOT.addTo(map);
 
-//plot ports
-function xyflip(coordset){ //flip x and y for leaflet
-    return [coordset[1],coordset[0]]
-}
 
 function DisplayPorts(){
 for (let i = 0; i < test.length; i++){
 
     var circle = L.circle([Number(test[i].Latitude), Number(test[i].Longitude)], //make circle, flip coords
         {
-        color: 'black', //circle properties
-        fillColor: 'rgba(0, 214, 252, 1)',
-        fillOpacity: 0.7
+            radius: 100
         }).addTo(map)
 };
 
