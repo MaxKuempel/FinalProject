@@ -30,15 +30,37 @@ var lines = L.layerGroup().addTo(map); // declare layer group
 
 
 
-function Draw_Line(i, entries){
+function ColorLines(category) {
+    switch (category) {
+        case "Industrial goods":
+            return "#f8e16f"
+        case "Agricultural goods":
+            return "#95cf92"
+        case "Ore, Rock and Minerals":
+            return "#f4895f"
+        case  "Wood and Wood Products":
+            return "#6c584c"
+        case "Coal, Oil, and Petrochemicals":
+            return "#333333"
+        case "Fish and Marine Goods": 
+            return "#369acc"
+        case "Other Goods":
+            return "#9656a2"
+    }
+}
+
+function Draw_Line(i, entries, maxFlow){
  new L.Polyline(
         [[Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
         [Number(entries[i].For_Lat), Number(entries[i].For_Lon)]], //make circle, flip coords
         {
-       weight: (entries[i].TONNAGE / 200000)
+            color: ColorLines(entries[i].Good_Category),
+       weight: ((entries[i].TONNAGE / maxFlow) * 10)
         }).addTo(lines)
 }
 
+
+                               
 
 let country_selected; 
 
@@ -48,7 +70,7 @@ lines.clearLayers();
     let Line_To_Display;
 Line_To_Display = flows.filter(entry => entry.CTRY_F_NAME === country_selected);
 for (let i = 0; i <  Line_To_Display.length; i++){
-Draw_Line(i, Line_To_Display)
+Draw_Line(i, Line_To_Display, Math.max(...Line_To_Display.map(onj => Number(onj.TONNAGE))))
   
 };
 
