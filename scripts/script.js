@@ -1,18 +1,18 @@
-       let test;
-        let csv;
+let flows;
+let csv;
 
-                function FetchTest(){
-    fetch("data/ports.csv")
+function FetchFlows(){
+    fetch("data/e_2023_merged.csv")
     .then(response => response.text())
     .then(data => {
         csv = data;
         console.log("conversion started");
-        test = csv2geojson.auto(data);
+        flows = csv2geojson.auto(data);
         console.log("conversion complete :)");
          DisplayPorts();
          })
-        }
-FetchTest()
+                    }
+
 
 //basemap
 var map = L.map('map')
@@ -24,22 +24,40 @@ var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{
 });
 OpenStreetMap_HOT.addTo(map);
 
+//RENDERING LINES
+var lines = L.layerGroup().addTo(map); // declare layer group
 
-function DisplayPorts(){
-for (let i = 0; i < test.length; i++){
 
-    var circle = L.circle([Number(test[i].Latitude), Number(test[i].Longitude)], //make circle, flip coords
+
+
+function Draw_Line(i, entries){
+ new L.Polyline(
+        [[Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
+        [Number(entries[i].For_Lat), Number(entries[i].For_Lon)]], //make circle, flip coords
         {
-            radius: 100
-        }).addTo(map)
-};
-
+       weight: (entries[i].TONNAGE / 200000)
+        }).addTo(lines)
 }
 
 
+let country_selected; 
 
+function DisplayPorts(){
+lines.clearLayers();
+ country_selected = document.getElementById("country").value
+    let Line_To_Display;
+Line_To_Display = flows.filter(entry => entry.CTRY_F_NAME === country_selected);
+for (let i = 0; i <  Line_To_Display.length; i++){
+Draw_Line(i, Line_To_Display)
+  
+};
+
+};
+
+
+
+    FetchFlows();
 
 window.onload = function() {
-    FetchTest();
 }
 

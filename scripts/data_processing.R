@@ -47,6 +47,6 @@ test <- merge(e_2023[],domestic_ports) %>%
   rename(
     For_Lat = Latitude,
     For_Lon = Longitude
-  )
+  ) %>% drop_na()
 
 write.csv(test, file="data/e_2023_merged.csv")
