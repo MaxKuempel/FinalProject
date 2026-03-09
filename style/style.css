@@ -1,3 +1,16 @@
 #map {
-    height: 1000px;
+    height: 800px;
+}
+/*---------------- */
+.info.legend {
+    background: white;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+.info.legend i {
+    width: 50px;
+    height: 0px; /* Height of the line container (0 for <hr> effect) */
+    display: block;
+    margin-bottom: 5px; /* Space between items */
 }

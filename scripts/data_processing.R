@@ -144,7 +144,8 @@ foreign_ports <- read_excel("data/foreign_ports.xlsx") %>%
     FORPORT = 'Schedule K Code'
   ) %>%
   dplyr::select(c("FORPORT","Foreign Port Name", "Latitude", "Longitude"))%>%
-  mutate(FORPORT = as.numeric(FORPORT))
+  mutate(FORPORT = as.numeric(FORPORT)) %>%
+  distinct(FORPORT, .keep_all = TRUE)
 
 #join data
 

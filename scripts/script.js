@@ -35,7 +35,7 @@ function ColorLines(category) {
         case "Industrial goods":
             return "#f8e16f"
         case "Agricultural goods":
-            return "#95cf92"
+            return "#70b070"
         case "Ore, Rock and Minerals":
             return "#f4895f"
         case  "Wood and Wood Products":
@@ -59,9 +59,33 @@ function Draw_Line(i, entries, maxFlow){
         }).addTo(lines)
 }
 
+//Legend
+//-------------------------
+var legend = L.control({position: 'bottomright'});
 
-                               
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend');
+    // Further HTML will be added here
+    return div;
+};
+                              
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend');
+    var thicknesses = [1, 3, 5]; // Example line thicknesses
+    var labels = ['Thin Line', 'Medium Line', 'Thick Line'];
 
+    // Loop through the thicknesses and generate a label with a line for each
+    for (var i = 0; i < thicknesses.length; i++) {
+        // Add a horizontal line and its corresponding label
+        div.innerHTML +=
+            '<i style="border-top: ' + thicknesses[i] + 'px solid #333;"></i> ' + // Custom line style
+            labels[i] + '<br>';
+    }
+    return div;
+};
+legend.addTo(map);
+
+///---------------
 let country_selected; 
 
 function DisplayPorts(){
