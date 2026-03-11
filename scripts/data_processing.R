@@ -86,9 +86,65 @@ GoodCatagorize <- function(good) {
 
 }
 
+#read port coords
+#process domestic ports
+domestic_ports <- read_excel("data/domestic_ports.xlsx")
+domestic_ports <- domestic_ports %>% 
+  filter(FAC_TYPE == "Dock") %>%
+  dplyr::select(c("LATITUDE", "LONGITUDE", "PORT", "PORT_NAME")) %>% 
+  drop_na() %>% 
+  base::unique() %>%
+  group_by(PORT, PORT_NAME) %>%
+  mutate(LATITUDE = mean(LATITUDE))%>%
+  mutate(LONGITUDE = mean(LONGITUDE)) %>%
+  ungroup()%>%
+  base::unique()
+#process foreign ports
+foreign_ports <- read_excel("data/foreign_ports.xlsx") %>%
+  rename(
+    FORPORT = 'Schedule K Code'
+  ) %>%
+  dplyr::select(c("FORPORT","Foreign Port Name", "Country Name", "Latitude", "Longitude"))%>%
+  mutate(FORPORT = as.numeric(FORPORT)) %>% drop_na()#%>%
+#distinct(FORPORT, .keep_all = TRUE)
+
+##############################################################################
+ProcessData <- function(dataset_name) {
+dataset_address <- paste0("data/",dataset_name,".xlsx")
+dataset <- read_excel(dataset_address, sheet = 0) %>% 
+    dplyr::select(!c("WTWY","WTWY_NAME")) %>%
+    mutate(PORT = as.numeric(PORT)) %>%
+    group_by(PORT, FORPORT,PMS_NAME) %>%
+    mutate(TONNAGE = sum(TONNAGE)) %>%
+    base::unique() %>%
+    ungroup() %>%
+    mutate(Good_Category = case_when(
+      PMS_NAME %in% Ind_list ~ "Industrial goods",
+      PMS_NAME %in% Ag_list ~ "Agricultural goods",
+      PMS_NAME %in% Petro_list ~ "Coal, Oil, and Petrochemicals",
+      PMS_NAME %in% Mineral_list ~"Ore, Rock and Minerals",
+      PMS_NAME %in% Timber_list ~ "Wood and Wood Products",
+      PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
+      TRUE ~ "Other Goods"
+    ))
+dataset <- merge(dataset,domestic_ports) %>%
+  rename(
+    Dom_Lat =  LATITUDE,
+    Dom_Lon = LONGITUDE
+  ) %>%
+  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
+  rename(
+    For_Lat = Latitude,
+    For_Lon = Longitude
+  )
+
+write.csv(dataset, file=paste0("data/",dataset_name,"_merged.csv"))
+}
+##############################################################################
+
 #read import and exports
 
-e_2023 <- read_excel("data/Imports_Exports_2023.xlsx", sheet = "Exports") %>% 
+e_2023 <- read_excel("data/Imports_Exports_2023.xlsx", sheet = 1) %>% 
   dplyr::select(!c("WTWY","WTWY_NAME")) %>%
   mutate(PORT = as.numeric(PORT)) %>%
   group_by(PORT, FORPORT,PMS_NAME) %>%
@@ -125,51 +181,30 @@ i_2023 <- read_excel("data/Imports_Exports_2023.xlsx", sheet = "Imports") %>%
 
 
 
-#read port coords
-#process domestic ports
-domestic_ports <- read_excel("data/domestic_ports.xlsx")
-domestic_ports <- domestic_ports %>% 
-  filter(FAC_TYPE == "Dock") %>%
-  dplyr::select(c("LATITUDE", "LONGITUDE", "PORT", "PORT_NAME")) %>% 
-  drop_na() %>% 
-  base::unique() %>%
-  group_by(PORT, PORT_NAME) %>%
-  mutate(LATITUDE = mean(LATITUDE))%>%
-  mutate(LONGITUDE = mean(LONGITUDE)) %>%
-  ungroup()%>%
-  base::unique()
-#process foreign ports
-foreign_ports <- read_excel("data/foreign_ports.xlsx") %>%
-  rename(
-    FORPORT = 'Schedule K Code'
-  ) %>%
-  dplyr::select(c("FORPORT","Foreign Port Name", "Latitude", "Longitude"))%>%
-  mutate(FORPORT = as.numeric(FORPORT)) %>%
-  distinct(FORPORT, .keep_all = TRUE)
 
 #join data
 
-e_2023_merged <- merge(e_2023[],domestic_ports) %>%
+e_2023_merged <- merge(e_2023,domestic_ports) %>%
   rename(
    Dom_Lat =  LATITUDE,
   Dom_Lon = LONGITUDE
   ) %>%
-  merge(foreign_ports, by.x = "FORPORT", by.y = "FORPORT") %>%
+  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
   rename(
     For_Lat = Latitude,
     For_Lon = Longitude
-  ) %>% drop_na()
+  )
 
 i_2023_merged <- merge(i_2023[],domestic_ports) %>%
   rename(
     Dom_Lat =  LATITUDE,
     Dom_Lon = LONGITUDE
   ) %>%
-  merge(foreign_ports, by.x = "FORPORT", by.y = "FORPORT") %>%
+  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
   rename(
     For_Lat = Latitude,
     For_Lon = Longitude
-  ) %>% drop_na()
+  )
 
 
 #write data

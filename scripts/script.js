@@ -1,14 +1,28 @@
 let flows;
 let csv;
+let countries;
 
-function FetchFlows(){
-    fetch("data/e_2023_merged.csv")
+function FetchCountries(){
+    fetch("data/WorldCountries_50m.geojson")
+    .then(response => response.json())
+    .then(data => {
+        countries = data;
+        console.log(data);
+        DisplayCountries()
+    })
+}
+
+function FetchFlows(Year, Import_Export){
+    let datasetname = "data/" + Import_Export + "_" + Year + "_merged.csv"
+    console.log(datasetname)
+    fetch(datasetname)
     .then(response => response.text())
     .then(data => {
         csv = data;
         console.log("conversion started");
         flows = csv2geojson.auto(data);
         console.log("conversion complete :)");
+        
          DisplayPorts();
          })
                     }
@@ -20,9 +34,42 @@ var map = L.map('map')
 
 var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 	maxZoom: 19,
+    maxBounds: L.latLngBounds(L.latLng(60,0),L.latLng(-60,10)),
+    maxBoundsViscosity: 1.0,
 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
 });
 OpenStreetMap_HOT.addTo(map);
+
+//displaying countries
+function DisplayCountries() {
+    L.geoJson(countries, 
+        {
+        fillOpacity: 0,
+        color: "#000",
+        weight: 1.1,
+        opacity: 1
+
+    })
+    
+    .addTo(map)
+}
+
+map.on('click', function(e) {
+    console.log(e.latlng)
+    for (let i = 0; i < countries.features.length; i++) {
+    if (turf.booleanPointInPolygon(
+        [e.latlng.lng,
+        e.latlng.lat
+        ], 
+        countries.features[i])) {
+            DisplayPorts(countries.features[i].properties.admin)
+        }
+        
+    }
+    
+})
+
+
 
 //RENDERING LINES
 var lines = L.layerGroup().addTo(map); // declare layer group
@@ -49,6 +96,29 @@ function ColorLines(category) {
     }
 }
 
+function LinePopup(line){
+    if (line.TYPE_PROC == "Export") {
+        return (
+            "In " + line.YEAR + ", " +
+            Math.round(line.TONNAGE).toLocaleString() + " tons of " +
+            line.Good_Category + " was exported from " +
+            line.PORT_NAME + " to " + line.FORPORT_NAME + ", " +
+            line.CTRY_F_NAME + ". " +
+            "\n Specific good: " + line.PMS_NAME
+        )
+    }
+    else {
+        return (
+             "In " + line.YEAR + ", " +
+            Math.round(line.TONNAGE).toLocaleString() + " tons of " +
+            line.Good_Category + " was imported to " +
+            line.PORT_NAME + " from " + line.FORPORT_NAME + ", " +
+            line.CTRY_F_NAME + ". " +
+            "\n Specific good: " + line.PMS_NAME
+        )
+    }
+}
+
 function Draw_Line(i, entries, maxFlow){
  new L.Polyline(
         [[Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
@@ -56,7 +126,10 @@ function Draw_Line(i, entries, maxFlow){
         {
             color: ColorLines(entries[i].Good_Category),
        weight: ((entries[i].TONNAGE / maxFlow) * 10)
-        }).addTo(lines)
+        }).bindPopup(
+            LinePopup(entries[i])
+
+        ).addTo(lines)
 }
 
 //Legend
@@ -70,15 +143,25 @@ legend.onAdd = function (map) {
 };
                               
 legend.onAdd = function (map) {
-    var div = L.DomUtil.create('div', 'info legend');
-    var thicknesses = [1, 3, 5]; // Example line thicknesses
-    var labels = ['Thin Line', 'Medium Line', 'Thick Line'];
+    var div = L.DomUtil.create('div', 'info legend'); //stolen and modified from google ai overview
+     // Example line thicknesses
+    var labels = ["Industrial goods", 
+        "Agricultural goods", 
+        "Ore, Rock and Minerals",
+        "Wood and Wood Products",
+        "Coal, Oil, and Petrochemicals",
+        "Fish and Marine Goods",
+        "Other Goods"
+
+    ];
 
     // Loop through the thicknesses and generate a label with a line for each
-    for (var i = 0; i < thicknesses.length; i++) {
+    div.innerHTML = '<h3> Legend </h1>'
+    for (var i = 0; i < labels.length; i++) {
         // Add a horizontal line and its corresponding label
         div.innerHTML +=
-            '<i style="border-top: ' + thicknesses[i] + 'px solid #333;"></i> ' + // Custom line style
+            labels[i] + '<br>' +
+            '<i style="border-top: ' + 5 + 'px solid ' + ColorLines(labels[i]) + ';"></i> '  // Custom line style
             labels[i] + '<br>';
     }
     return div;
@@ -88,22 +171,29 @@ legend.addTo(map);
 ///---------------
 let country_selected; 
 
-function DisplayPorts(){
+function DisplayPorts(country_selected){
+
+
 lines.clearLayers();
- country_selected = document.getElementById("country").value
+ //country_selected = document.getElementById("country").value
     let Line_To_Display;
 Line_To_Display = flows.filter(entry => entry.CTRY_F_NAME === country_selected);
 for (let i = 0; i <  Line_To_Display.length; i++){
 Draw_Line(i, Line_To_Display, Math.max(...Line_To_Display.map(onj => Number(onj.TONNAGE))))
-  
+
+
 };
 
+
 };
 
+let year_selected;
+let direction;
 
 
-    FetchFlows();
+    FetchFlows("2023","e");
 
 window.onload = function() {
+    FetchCountries()
 }
 

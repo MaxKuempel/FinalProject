@@ -16,11 +16,27 @@
         </script>
         <script type="text/javascript" src="lib/leaflet/dist/leaflet-src.js"></script>
         <script type="text/javascript" src = "https://npmcdn.com/csv2geojson@latest/csv2geojson.js"> </script>
+        <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
         <script  type="text/javascript" src = "scripts/script.js" defer> </script>
+    <h1>US Imports/Exports 2011(?) - 2023 Interactive Explorer</h1>
+    <form oninput="FetchFlows('2023', direction.value)"> 
+        <input id = "export" name = "direction" value = "e" type = "radio" onclick = "direction = " checked>
+            <label for = "export"> Export</label>
+        <input id = "import" name = "direction" value = "i" type = "radio">
+            <label for = "import"> Import</label>
+    </form >
+
+     <form oninput="result.value = year_slider.value"> 
+        <input id = "year_slider" name = "year_slider" type = "range"  min="2016" max="2023" step = "7" value = "2023">
+            <output name="result" for="year_slider">2023</output></label>
+    </form>
+    
+    <label for = "country"> Click on a country or enter a country's name</label> <br>
      <input id = "country" type="text"> 
-     
-     <button onclick= "DisplayPorts()"> 
+        
+     <button onclick= "DisplayPorts(document.getElementById('country').value)"> 
         Submit 
     </button> 
+
     <div id = "map"> </div>
     </body>
