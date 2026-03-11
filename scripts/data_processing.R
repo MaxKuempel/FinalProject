@@ -111,7 +111,7 @@ foreign_ports <- read_excel("data/foreign_ports.xlsx") %>%
 ##############################################################################
 ProcessData <- function(dataset_name) {
 dataset_address <- paste0("data/",dataset_name,".xlsx")
-dataset <- read_excel(dataset_address, sheet = 0) %>% 
+i_dataset <- read_excel(dataset_address, sheet = 1) %>% 
     dplyr::select(!c("WTWY","WTWY_NAME")) %>%
     mutate(PORT = as.numeric(PORT)) %>%
     group_by(PORT, FORPORT,PMS_NAME) %>%
@@ -127,7 +127,26 @@ dataset <- read_excel(dataset_address, sheet = 0) %>%
       PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
       TRUE ~ "Other Goods"
     ))
-dataset <- merge(dataset,domestic_ports) %>%
+
+e_dataset <- read_excel(dataset_address, sheet = 2) %>% 
+  dplyr::select(!c("WTWY","WTWY_NAME")) %>%
+  mutate(PORT = as.numeric(PORT)) %>%
+  group_by(PORT, FORPORT,PMS_NAME) %>%
+  mutate(TONNAGE = sum(TONNAGE)) %>%
+  base::unique() %>%
+  ungroup() %>%
+  mutate(Good_Category = case_when(
+    PMS_NAME %in% Ind_list ~ "Industrial goods",
+    PMS_NAME %in% Ag_list ~ "Agricultural goods",
+    PMS_NAME %in% Petro_list ~ "Coal, Oil, and Petrochemicals",
+    PMS_NAME %in% Mineral_list ~"Ore, Rock and Minerals",
+    PMS_NAME %in% Timber_list ~ "Wood and Wood Products",
+    PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
+    TRUE ~ "Other Goods"
+  ))
+
+i_dataset <- 
+  merge(i_dataset,domestic_ports) %>%
   rename(
     Dom_Lat =  LATITUDE,
     Dom_Lon = LONGITUDE
@@ -138,8 +157,24 @@ dataset <- merge(dataset,domestic_ports) %>%
     For_Lon = Longitude
   )
 
-write.csv(dataset, file=paste0("data/",dataset_name,"_merged.csv"))
+e_dataset <- merge(e_dataset,domestic_ports) %>%
+  rename(
+    Dom_Lat =  LATITUDE,
+    Dom_Lon = LONGITUDE
+  ) %>%
+  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
+  rename(
+    For_Lat = Latitude,
+    For_Lon = Longitude
+  )
+
+#######write data
+#imports
+write.csv(i_dataset, file=paste0("data/","i_",i_dataset$YEAR[1],"_merged.csv"))
+#exports
+write.csv(e_dataset, file=paste0("data/","e_",e_dataset$YEAR[1],"_merged.csv"))
 }
+ProcessData("Imports_Exports_2020")
 ##############################################################################
 
 #read import and exports

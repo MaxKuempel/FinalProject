@@ -187,12 +187,11 @@ Draw_Line(i, Line_To_Display, Math.max(...Line_To_Display.map(onj => Number(onj.
 
 };
 
-let year_selected;
-let direction;
-
-
-    FetchFlows("2023","e");
-
+function FlowSwitcher(){
+    direction = document.querySelector('input[name="direction"]:checked') //google ai overvierw
+    FetchFlows(document.getElementById('year_slider').value, direction.value)
+}
+FlowSwitcher()
 window.onload = function() {
     FetchCountries()
 }
