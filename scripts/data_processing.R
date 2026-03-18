@@ -111,7 +111,7 @@ foreign_ports <- read_excel("data/foreign_ports.xlsx") %>%
 ##############################################################################
 ProcessData <- function(dataset_name) {
 dataset_address <- paste0("data/",dataset_name,".xlsx")
-i_dataset <- read_excel(dataset_address, sheet = 1) %>% 
+i_dataset <- read_excel(dataset_address, sheet = 2) %>% 
     dplyr::select(!c("WTWY","WTWY_NAME")) %>%
     mutate(PORT = as.numeric(PORT)) %>%
     group_by(PORT, FORPORT,PMS_NAME) %>%
@@ -128,7 +128,7 @@ i_dataset <- read_excel(dataset_address, sheet = 1) %>%
       TRUE ~ "Other Goods"
     ))
 
-e_dataset <- read_excel(dataset_address, sheet = 2) %>% 
+e_dataset <- read_excel(dataset_address, sheet = 1) %>% 
   dplyr::select(!c("WTWY","WTWY_NAME")) %>%
   mutate(PORT = as.numeric(PORT)) %>%
   group_by(PORT, FORPORT,PMS_NAME) %>%
@@ -157,6 +157,8 @@ i_dataset <-
     For_Lon = Longitude
   )
 
+write.csv(i_dataset, file=paste0("data/","i_",i_dataset$YEAR[1],"_merged.csv"))
+
 e_dataset <- merge(e_dataset,domestic_ports) %>%
   rename(
     Dom_Lat =  LATITUDE,
@@ -167,14 +169,14 @@ e_dataset <- merge(e_dataset,domestic_ports) %>%
     For_Lat = Latitude,
     For_Lon = Longitude
   )
-
+write.csv(e_dataset, file=paste0("data/","e_",e_dataset$YEAR[1],"_merged.csv"))
 #######write data
 #imports
-write.csv(i_dataset, file=paste0("data/","i_",i_dataset$YEAR[1],"_merged.csv"))
+
 #exports
-write.csv(e_dataset, file=paste0("data/","e_",e_dataset$YEAR[1],"_merged.csv"))
+
 }
-ProcessData("Imports_Exports_2020")
+ProcessData("Imports_Exports_2023")
 ##############################################################################
 
 #read import and exports

@@ -18,6 +18,7 @@
         <script type="text/javascript" src = "https://npmcdn.com/csv2geojson@latest/csv2geojson.js"> </script>
         <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
         <script  type="text/javascript" src = "scripts/script.js" defer> </script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
     <h1>US Imports/Exports 2011(?) - 2023 Interactive Explorer</h1>
     <form id = "direction_form" oninput="FlowSwitcher()"> 
         <input id = "direction" name = "direction" value = "e" type = "radio" checked>
@@ -34,9 +35,11 @@
     <label for = "country"> Click on a country or enter a country's name</label> <br>
      <input id = "country" type="text"> 
         
-     <button onclick= "DisplayPorts(document.getElementById('country').value)"> 
+     <button onclick= "{DisplayPorts(document.getElementById('country').value), country_selected =document.getElementById('country').value}"> 
         Submit 
     </button> 
+
+    <div id = "sidecar"><canvas id="sector_pie"></canvas></div> 
 
     <div id = "map"> </div>
     </body>

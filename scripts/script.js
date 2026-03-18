@@ -23,7 +23,7 @@ function FetchFlows(Year, Import_Export){
         flows = csv2geojson.auto(data);
         console.log("conversion complete :)");
         
-         DisplayPorts();
+         DisplayPorts(country_selected);
          })
                     }
 
@@ -53,16 +53,19 @@ function DisplayCountries() {
     
     .addTo(map)
 }
-
+let country_selected; 
 map.on('click', function(e) {
-    console.log(e.latlng)
+    
     for (let i = 0; i < countries.features.length; i++) {
     if (turf.booleanPointInPolygon(
         [e.latlng.lng,
         e.latlng.lat
         ], 
         countries.features[i])) {
-            DisplayPorts(countries.features[i].properties.admin)
+            country_selected = countries.features[i].properties.admin;
+            DisplayPorts(countries.features[i].properties.admin);
+            console.log(country_selected)
+            
         }
         
     }
@@ -126,7 +129,7 @@ function Draw_Line(i, entries, maxFlow){
         {
             color: ColorLines(entries[i].Good_Category),
        weight: ((entries[i].TONNAGE / maxFlow) * 10)
-        }).bindPopup(
+        }).bindTooltip(
             LinePopup(entries[i])
 
         ).addTo(lines)
@@ -168,8 +171,60 @@ legend.onAdd = function (map) {
 };
 legend.addTo(map);
 
+// Charting
+//import Chart from 'chart.js/auto' 
+var Country_pie =  new Chart();
+function Pie_Chart(Line_To_Display){ 
+Country_pie.destroy();
+
+//aggregate tonnage by industry category
+const categories = ["Industrial goods", 
+        "Agricultural goods", 
+        "Ore, Rock and Minerals",
+        "Wood and Wood Products",
+        "Coal, Oil, and Petrochemicals",
+        "Fish and Marine Goods",
+        "Other Goods"
+
+    ]
+let sum = [];
+for (var i = 0; i < categories.length; i++) {
+category_to_sum = Line_To_Display.filter(entry => entry.Good_Category === categories[i]);
+
+sum[i] = category_to_sum.map(f => Number(f[('TONNAGE')])).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+} 
+
+// ---- 
+Country_pie =  new Chart (
+    document.getElementById("sector_pie"),
+    {
+        type: 'doughnut',
+        data: {
+            labels: categories,//Line_To_Display.map(f => f['Good_Category']),
+            datasets: [{
+                label: "Tonnage: ",
+                data: sum,//Line_To_Display.map(f => Number(f[('TONNAGE')])),
+                backgroundColor:[
+                     "#f8e16f", 
+                     "#70b070",
+                     "#f4895f",
+                     "#6c584c",
+                     "#333333",
+                     "#369acc",
+                     "#9656a2"
+                ],
+                hoverOffset: 5
+            }]
+
+        }
+    }
+)
+}
+
+
 ///---------------
-let country_selected; 
+
 
 function DisplayPorts(country_selected){
 
@@ -183,13 +238,14 @@ Draw_Line(i, Line_To_Display, Math.max(...Line_To_Display.map(onj => Number(onj.
 
 
 };
-
-
+Pie_Chart(Line_To_Display)
+ 
 };
 
 function FlowSwitcher(){
-    direction = document.querySelector('input[name="direction"]:checked') //google ai overvierw
+    direction = document.querySelector('input[name="direction"]:checked') //google ai overvierw "getting value from form js"
     FetchFlows(document.getElementById('year_slider').value, direction.value)
+    
 }
 FlowSwitcher()
 window.onload = function() {
