@@ -16,44 +16,123 @@
         </script>
         <script type="text/javascript" src="lib/leaflet/dist/leaflet-src.js"></script>
         <script src='//unpkg.com/leaflet-arc/bin/leaflet-arc.min.js'></script>
-        <script src="path/to/leaflet.antimeridian-src.js"></script>
         <script type="text/javascript" src = "https://npmcdn.com/csv2geojson@latest/csv2geojson.js"> </script>
         <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
         <script  type="text/javascript" src = "scripts/script.js" defer> </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-    <h1>US Imports/Exports 2011(?) - 2023 Interactive Explorer</h1>
+    <h1>U.S.Imports/Exports Interactive Explorer (2012-2023)</h1>
+    
     
 
     <div id = "sidecar">
     <!--Form to select country, direction, and year-->
-    <h4>Properties</h4>
+    <h3>Properties</h3>
+    <h5></h5>
      <form id = "direction_form" oninput="FlowSwitcher()"> 
         <input id = "direction" name = "direction" value = "e" type = "radio" checked>
             <label id = "direction_label" for = "direction"> Export</label>
         <input id = "direction" name = "direction" value = "i" type = "radio">
             <label id = "direction_label" for = "direction"> Import</label>
     </form >
-
+    <p>Year</p>
      <form oninput="result.value = year_slider.value; FlowSwitcher()"> 
         <input id = "year_slider" name = "year_slider" type = "range"  min="2012" max="2023" step = "1" value = "2023">
             <output name="result" for="year_slider">2023</output></label>
     </form>
-    
+    <p>Line type (select straight for long distances)</p>
+     <form id = "linetype_form" oninput="SetLineType()"> 
+        <input id = "linetype" name = "linetype" value = "str" type = "radio" checked>
+            <label id = "linetype_label" for = "direction"> Straight</label>
+        <input id = "linetype" name = "linetype" value = "arc" type = "radio">
+            <label id = "linetype_label" for = "direction"> Arc</label>
+    </form >
+
     <label for = "country"> Click on a country or enter a country's name</label> <br>
      <input id = "country" type="text"> 
         
-     <button onclick= "{DisplayPorts(document.getElementById('country').value), country_selected =document.getElementById('country').value}"> 
-        Submit 
+     <button onclick= "{DisplayPorts(document.getElementById('country').value.charAt(0).toUpperCase() + 
+     document.getElementById('country').value.slice(1)), country_selected =document.getElementById('country').value}"> 
+        Submit <!-- Uppercasing only first letter method taken from Google AI overview. 
+        Prompt = "sentence capitalization js" -->
     </button> 
     <hr id = "property_divider">  </hr>
     
     <!-- Piechart and caption-->
     <canvas id="sector_pie"></canvas>
     <h3 id = total_tonnage>  </h3>
-    <p id = pie_chart_caption> NOTE: Currently 2019 is broken for some unknown reason  </p>
+    <p id = pie_chart_caption> NOTE: Currently 2019 is broken for some unknown reason.
+        Issue in R pre-processing </p>
    
 
     </div> 
 
     <div id = "map"> </div>
+<p>by Max Kuempel, for GEOG 472: Interactive Cartography</p>
+    <p>Oregon State University</p>
+
+    <p> 
+        Data from  
+        <a href = "https://ndclibrary.sec.usace.army.mil/"> 
+            Navigation and Civil Works Decision Support Library (NDC) 
+        </a> and
+         <a href = "https://geojson-maps.kyd.au/"> 
+            Download GeoJSON countries, by Ash Kyd
+        </a>
+        <ul> <strong>Notes</strong></ul>
+        <li>Data from before 2020 only contains a limited list of US ports</li>
+        <li>Data only includes trade via water, landlocked countries will have no data</li>
+        <li>Country name mis-matches will cause no data to appear. Require manual fixing</li>
+
+    <h3>
+        Industry Categories and Coresponding Goods </h3>
+        <ul class = "goodlist"> <strong>Industrial goods</strong>
+    <li>All Manufactured Equipment, Machinery and Product</li>
+    <li>Primary Non-Ferrous Metal Products;Fabricated Metal Products</li>
+    <li>Fertilizers</li>
+    <li>Other Chemicals and Related Products</li>
+    <li>Building Cement & Concrete; Lime; Glass</li>
+    <li>Primary Iron and Steel Products (Ingots,Bars,Rods,etc.)</li>
+    <li>Slag</li> </ul>
+
+    <ul class = "goodlist"> <strong>Agricultural goods</strong>
+    <li>Animal Feed, Grain Mill Products, Flour, Processed Grains</li>
+    <li>Vegetable Products</li>
+    <li>Corn</li>
+    <li>Wheat</li>
+    <li>Oilseeds (Soybean, Flaxseed and Others)</li>
+    <li>Other Agricultural Products; Food and Kindred Products</li>
+    <li>Barley, Rye, Oats, Rice and Sorghum Grains</li> </ul>
+
+    <ul class = "goodlist"> <strong>Coal, Oil, and Petrochemicals</strong>
+    <li>Coal,Lignite & Coal Coke</li>
+    <li>Distillate,Residual & Other Fuel Oils; Lube Oil & Greases</li>
+    <li>Petroleum Pitches, Coke, Asphalt, Naptha and Solvents</li>
+    <li>Petroleum Products NEC</li>
+    <li>Gasoline, Jet Fuel, Kerosene</li>
+    <li>Crude Petroleum</li> </ul>
+
+    <ul  class = "goodlist"> <strong>Ore, Rock and Minerals</strong> 
+    <li>Sulphur (Dry), Clay & Salt</li>
+    <li>Other Non-Metal. Min.</li>
+    <li>Iron Ore and Iron & Steel Waste & Scrap</li>
+    <li>Other Chemicals and Related Products</li>
+    <li>Sand, Gravel, Stone, Rock, Limestone, Soil, Dredged Material</li>
+    <li>Non-Ferrous Ores and Scrap</li></ul> 
+
+    <ul  class = "goodlist"> <strong>Wood and Wood products</strong> 
+    <li>Forest Products, Lumber, Logs, Woodchips</li>
+    <li>Pulp and Waste Paper</li>
+    <li>Paper & Allied Products</li>
+    <li>Primary Wood Products; Veneer; Plywood</li> </ul>
+    
+    <ul  class = "goodlist"><strong> Marine Goods</strong>
+    <li>Fish</li>
+    <li>Marine Shells</li> </ul>
+    
+    <ul class = "goodlist"><strong> Other goods</strong>
+    <li>Unknown goods</li>
+<li>Classified as "Other" in datasets already</li></ul>
+
+   
+    </p>
     </body>

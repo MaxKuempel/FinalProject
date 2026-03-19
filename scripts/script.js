@@ -1,6 +1,7 @@
 let flows;
 let csv;
 let countries;
+var linetype = "str"; //declare default line type
 
 function FetchCountries(){
     fetch("data/WorldCountries_50m.geojson")
@@ -23,18 +24,22 @@ function FetchFlows(Year, Import_Export){
         flows = csv2geojson.auto(data);
         console.log("conversion complete :)");
         
-         DisplayPorts(country_selected);
+         DisplayPorts(country_selected, document.querySelector('input[name="linetype"]:checked').value);
          })
-                    }
+}
 
 
 //basemap
-var map = L.map('map', {maxBounds: [[-90, -180], [90, 180]]})
+var map = L.map('map', {
+    maxBounds: [
+        [-75,-180],
+        [90,180]
+    ]
+})
         .setView([20, 0], 3)
 
 var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 	maxZoom: 19,
-    maxBounds: L.latLngBounds(L.latLng(60,0),L.latLng(-60,10)),
     maxBoundsViscosity: 1.0,
 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
 });
@@ -123,9 +128,10 @@ function LinePopup(line){
 }
 
 function Draw_Line(i, entries, maxFlow){
- new L.Polyline.Arc(
-        [Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
-        [Number(entries[i].For_Lat), Number(entries[i].For_Lon)], //make circle, flip coords
+if(linetype == "str") {
+ new L.Polyline(
+        [[Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
+        [Number(entries[i].For_Lat), Number(entries[i].For_Lon)]], //debugged point structure changes with Google AI
         {
             vertices: 500,
             offset: 25,
@@ -136,6 +142,26 @@ function Draw_Line(i, entries, maxFlow){
 
         ).addTo(lines)
 }
+else if(linetype == "arc") {
+    new L.Polyline.Arc(
+        [Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
+        [Number(entries[i].For_Lat), Number(entries[i].For_Lon)], //debugged point structure changes with Google AI
+        {
+            vertices: 500,
+            offset: 25,
+            color: ColorLines(entries[i].Good_Category),
+            weight: ((entries[i].TONNAGE / maxFlow) * 10)
+        }).bindPopup(
+            LinePopup(entries[i])
+
+        ).addTo(lines)
+}
+else {
+     console.log("ERROR: No line type selected")
+}
+
+}
+
 
 //Legend
 //-------------------------
@@ -174,8 +200,8 @@ legend.onAdd = function (map) {
 legend.addTo(map);
 
 // Charting
-//import Chart from 'chart.js/auto' 
-var Country_pie =  new Chart();
+
+var Country_pie =  new Chart(); //based on ChartJS documentation
 let TotalTonnage;
 
 function Pie_Chart(Line_To_Display){ 
@@ -196,7 +222,7 @@ for (var i = 0; i < categories.length; i++) {
 category_to_sum = Line_To_Display.filter(entry => entry.Good_Category === categories[i]);
 
 sum[i] = category_to_sum.map(f => Number(f[('TONNAGE')])).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-
+//array reduce method from Google AI Overview
 } 
 TotalTonnage = sum.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
 console.log(TotalTonnage);  
@@ -206,10 +232,10 @@ Country_pie =  new Chart (
     {
         type: 'doughnut',
         data: {
-            labels: categories,//Line_To_Display.map(f => f['Good_Category']),
+            labels: categories,
             datasets: [{
                 label: "Tonnage: ",
-                data: sum,//Line_To_Display.map(f => Number(f[('TONNAGE')])),
+                data: sum,
                 backgroundColor:[
                      "#f8e16f", 
                      "#70b070",
@@ -227,15 +253,19 @@ Country_pie =  new Chart (
 )
 //html edit sidebar text
 document.getElementById("total_tonnage").innerHTML = "Total: " + 
-Math.round(TotalTonnage).toLocaleString() + "Tons "
+Math.round(TotalTonnage).toLocaleString() + " Tons "
 
+//alert for selecting coutnry with no data
+if ( country_selected !== undefined && TotalTonnage == 0) {alert(country_selected + " has no data for " +
+    document.getElementById('year_slider').value + ". Try another year or country"
+)}
 }
 
 
 ///---------------
 
 
-function DisplayPorts(country_selected){
+function DisplayPorts(country_selected, linetype){
 
 
 lines.clearLayers();
@@ -257,7 +287,16 @@ function FlowSwitcher(){
     
 }
 FlowSwitcher()
+
+
+function SetLineType(){
+    linetype = document.querySelector('input[name="linetype"]:checked').value
+    DisplayPorts(country_selected, linetype)
+    
+}
+
 window.onload = function() {
     FetchCountries()
+    var linetype = "str";
 }
 

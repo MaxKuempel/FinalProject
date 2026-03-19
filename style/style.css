@@ -4,7 +4,7 @@
 
 #sidecar {
     float: right;
-    width: 400px;
+    width: 25vw;
 }
 #year_slider {
     width: 200px;
@@ -13,9 +13,14 @@
     font-size: 16px;
 }
 #property_divider {
-    height: 20px;
-    background-color: black;
+    height: 5px;
+    background-color: rgb(26, 66, 73);
     border-top: 1px;
+}
+
+
+.goodlist {
+    float:unset;
 }
 
 /*---------------- */
@@ -36,7 +41,7 @@ h1{
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 10px;
     border-radius: 5px;
-    background-color: rgb(255, 255, 255);
+    background-color: rgb(205, 224, 240);
 }
 body{
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
