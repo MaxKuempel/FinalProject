@@ -102,16 +102,22 @@ domestic_ports <- domestic_ports %>%
 #process foreign ports
 foreign_ports <- read_excel("data/foreign_ports.xlsx") %>%
   rename(
-    FORPORT = 'Schedule K Code'
+    FORPORT = 'Schedule K Code',
+    FORPORT_NAME = 'Foreign Port Name',
+    CTRY_F_NAME = 'Country Name'
   ) %>%
-  dplyr::select(c("FORPORT","Foreign Port Name", "Country Name", "Latitude", "Longitude"))%>%
-  mutate(FORPORT = as.numeric(FORPORT)) %>% drop_na()#%>%
+  dplyr::select(c("FORPORT","FORPORT_NAME", "CTRY_F_NAME", "Latitude", "Longitude")) %>%
+  mutate(FORPORT = as.numeric(FORPORT)) %>% 
+  drop_na() %>%
+  mutate(Port_Country = paste(FORPORT_NAME, CTRY_F_NAME))
 #distinct(FORPORT, .keep_all = TRUE)
 
 ##############################################################################
-ProcessData <- function(dataset_name) {
+
+
+ProcessData <- function(dataset_name, export_sheet, import_sheet) {
 dataset_address <- paste0("data/",dataset_name,".xlsx")
-i_dataset <- read_excel(dataset_address, sheet = 2) %>% 
+i_dataset <- read_excel(dataset_address, sheet = import_sheet) %>% 
     dplyr::select(!c("WTWY","WTWY_NAME")) %>%
     mutate(PORT = as.numeric(PORT)) %>%
     group_by(PORT, FORPORT,PMS_NAME) %>%
@@ -126,9 +132,10 @@ i_dataset <- read_excel(dataset_address, sheet = 2) %>%
       PMS_NAME %in% Timber_list ~ "Wood and Wood Products",
       PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
       TRUE ~ "Other Goods"
-    ))
+    )) %>%
+  mutate(Port_Country = paste(FORPORT_NAME, CTRY_F_NAME))
 
-e_dataset <- read_excel(dataset_address, sheet = 1) %>% 
+e_dataset <- read_excel(dataset_address, sheet = export_sheet) %>% 
   dplyr::select(!c("WTWY","WTWY_NAME")) %>%
   mutate(PORT = as.numeric(PORT)) %>%
   group_by(PORT, FORPORT,PMS_NAME) %>%
@@ -143,32 +150,44 @@ e_dataset <- read_excel(dataset_address, sheet = 1) %>%
     PMS_NAME %in% Timber_list ~ "Wood and Wood Products",
     PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
     TRUE ~ "Other Goods"
-  ))
+  )) %>%
+  mutate(Port_Country = paste(FORPORT_NAME, CTRY_F_NAME))
 
-i_dataset <- 
-  merge(i_dataset,domestic_ports) %>%
+i_dataset <- merge(i_dataset, domestic_ports) %>%
   rename(
     Dom_Lat =  LATITUDE,
     Dom_Lon = LONGITUDE
-  ) %>%
-  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
+  ) 
+
+  i_dataset <- merge(i_dataset, foreign_ports, by = "Port_Country", all = FALSE) %>%
   rename(
     For_Lat = Latitude,
     For_Lon = Longitude
+  ) %>% rename(
+    FORPORT = "FORPORT.x",
+    FORPORT_NAME = "FORPORT_NAME.x",
+    CTRY_F_NAME = "CTRY_F_NAME.x"
   )
+  
 
 write.csv(i_dataset, file=paste0("data/","i_",i_dataset$YEAR[1],"_merged.csv"))
 
-e_dataset <- merge(e_dataset,domestic_ports) %>%
+e_dataset <- merge(e_dataset,domestic_ports, all = FALSE) %>%
   rename(
     Dom_Lat =  LATITUDE,
     Dom_Lon = LONGITUDE
-  ) %>%
-  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
+  )
+
+e_dataset <- merge(e_dataset, foreign_ports, by = "Port_Country", all = FALSE) %>%
   rename(
     For_Lat = Latitude,
     For_Lon = Longitude
+  ) %>% rename(
+    FORPORT = "FORPORT.x",
+    FORPORT_NAME = "FORPORT_NAME.x",
+    CTRY_F_NAME = "CTRY_F_NAME.x"
   )
+
 write.csv(e_dataset, file=paste0("data/","e_",e_dataset$YEAR[1],"_merged.csv"))
 #######write data
 #imports
@@ -176,79 +195,19 @@ write.csv(e_dataset, file=paste0("data/","e_",e_dataset$YEAR[1],"_merged.csv"))
 #exports
 
 }
-ProcessData("Imports_Exports_2023")
+
 ##############################################################################
+ProcessData("Imports_Exports_2023", 1, 2)
+ProcessData("Imports_Exports_2022", 2, 1)
+ProcessData("Imports_Exports_2021", 2, 1)
 
-#read import and exports
+ProcessData("Exports_Imports_2019",2,1)
 
-e_2023 <- read_excel("data/Imports_Exports_2023.xlsx", sheet = 1) %>% 
-  dplyr::select(!c("WTWY","WTWY_NAME")) %>%
-  mutate(PORT = as.numeric(PORT)) %>%
-  group_by(PORT, FORPORT,PMS_NAME) %>%
-  mutate(TONNAGE = sum(TONNAGE)) %>%
-  base::unique() %>%
-  ungroup() %>%
-  mutate(Good_Category = case_when(
-    PMS_NAME %in% Ind_list ~ "Industrial goods",
-    PMS_NAME %in% Ag_list ~ "Agricultural goods",
-    PMS_NAME %in% Petro_list ~ "Coal, Oil, and Petrochemicals",
-    PMS_NAME %in% Mineral_list ~"Ore, Rock and Minerals",
-    PMS_NAME %in% Timber_list ~ "Wood and Wood Products",
-    PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
-    TRUE ~ "Other Goods"
-  ))
+ProcessData("Exports_Import_2018",1,2)
+ProcessData("Exports_Imports_2017",1,2)
 
-i_2023 <- read_excel("data/Imports_Exports_2023.xlsx", sheet = "Imports") %>% 
-  dplyr::select(!c("WTWY","WTWY_NAME")) %>%
-  mutate(PORT = as.numeric(PORT)) %>%
-  group_by(PORT, FORPORT,PMS_NAME) %>%
-  mutate(TONNAGE = sum(TONNAGE)) %>%
-  base::unique() %>%
-  ungroup() %>%
-  mutate(Good_Category = case_when(
-    PMS_NAME %in% Ind_list ~ "Industrial goods",
-    PMS_NAME %in% Ag_list ~ "Agricultural goods",
-    PMS_NAME %in% Petro_list ~ "Coal, Oil, and Petrochemicals",
-    PMS_NAME %in% Mineral_list ~"Ore, Rock and Minerals",
-    PMS_NAME %in% Timber_list ~ "Wood and Wood Products",
-    PMS_NAME %in% Fish_list ~ "Fish and Marine Goods",
-    TRUE ~ "Other Goods"
-  ))
-
-
-
-
-
-#join data
-
-e_2023_merged <- merge(e_2023,domestic_ports) %>%
-  rename(
-   Dom_Lat =  LATITUDE,
-  Dom_Lon = LONGITUDE
-  ) %>%
-  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
-  rename(
-    For_Lat = Latitude,
-    For_Lon = Longitude
-  )
-
-i_2023_merged <- merge(i_2023[],domestic_ports) %>%
-  rename(
-    Dom_Lat =  LATITUDE,
-    Dom_Lon = LONGITUDE
-  ) %>%
-  merge(foreign_ports, by.x = "FORPORT_NAME", by.y = "Foreign Port Name") %>%
-  rename(
-    For_Lat = Latitude,
-    For_Lon = Longitude
-  )
-
-
-#write data
-write.csv(e_2023_merged, file="data/e_2023_merged.csv")
-write.csv(i_2023_merged, file="data/i_2023_merged.csv")
-
-#create country list
-write.csv(unique(test$CTRY_F_NAME), file = "data/country_list.csv")
-
-
+ProcessData("Imports_Exports_2016",2,1)
+ProcessData("Imports_Exports_2015", 3, 2)
+ProcessData("Imports_Exports_2014", 2, 1)
+ProcessData("Imports_Exports_2013", 1, 2)
+ProcessData("Imports_Exports_2012", 1, 2)

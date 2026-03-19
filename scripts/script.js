@@ -29,7 +29,7 @@ function FetchFlows(Year, Import_Export){
 
 
 //basemap
-var map = L.map('map')
+var map = L.map('map', {maxBounds: [[-90, -180], [90, 180]]})
         .setView([20, 0], 3)
 
 var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -123,13 +123,15 @@ function LinePopup(line){
 }
 
 function Draw_Line(i, entries, maxFlow){
- new L.Polyline(
-        [[Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
-        [Number(entries[i].For_Lat), Number(entries[i].For_Lon)]], //make circle, flip coords
+ new L.Polyline.Arc(
+        [Number(entries[i].Dom_Lat), Number(entries[i].Dom_Lon)],
+        [Number(entries[i].For_Lat), Number(entries[i].For_Lon)], //make circle, flip coords
         {
+            vertices: 500,
+            offset: 25,
             color: ColorLines(entries[i].Good_Category),
-       weight: ((entries[i].TONNAGE / maxFlow) * 10)
-        }).bindTooltip(
+            weight: ((entries[i].TONNAGE / maxFlow) * 10)
+        }).bindPopup(
             LinePopup(entries[i])
 
         ).addTo(lines)
@@ -174,6 +176,8 @@ legend.addTo(map);
 // Charting
 //import Chart from 'chart.js/auto' 
 var Country_pie =  new Chart();
+let TotalTonnage;
+
 function Pie_Chart(Line_To_Display){ 
 Country_pie.destroy();
 
@@ -194,7 +198,8 @@ category_to_sum = Line_To_Display.filter(entry => entry.Good_Category === catego
 sum[i] = category_to_sum.map(f => Number(f[('TONNAGE')])).reduce((accumulator, currentValue) => accumulator + currentValue, 0);
 
 } 
-
+TotalTonnage = sum.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+console.log(TotalTonnage);  
 // ---- 
 Country_pie =  new Chart (
     document.getElementById("sector_pie"),
@@ -220,6 +225,10 @@ Country_pie =  new Chart (
         }
     }
 )
+//html edit sidebar text
+document.getElementById("total_tonnage").innerHTML = "Total: " + 
+Math.round(TotalTonnage).toLocaleString() + "Tons "
+
 }
 
 

@@ -6,7 +6,17 @@
     float: right;
     width: 400px;
 }
-
+#year_slider {
+    width: 200px;
+}
+#direction_label {
+    font-size: 16px;
+}
+#property_divider {
+    height: 20px;
+    background-color: black;
+    border-top: 1px;
+}
 
 /*---------------- */
 .info.legend {
